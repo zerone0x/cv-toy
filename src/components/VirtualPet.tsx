@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Play, Hand, Sparkles, Bug, Heart, Utensils, Pointer } from 'lucide-react';
-import { Hands, HAND_CONNECTIONS } from '@mediapipe/hands';
-import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 
 interface PetPosition {
   x: number;
@@ -102,7 +100,7 @@ const VirtualPet: React.FC = () => {
   useEffect(() => {
     if (!isCameraOn) return;
 
-    let handsInstance: Hands | null = null;
+    let handsInstance: any = null;
     let animationId = 0;
     let sending = false;
 
@@ -120,6 +118,14 @@ const VirtualPet: React.FC = () => {
           videoRef.current.srcObject = stream as MediaStream;
           await videoRef.current.play();
         }
+
+        const [handsModule, drawingModule] = await Promise.all([
+          import('@mediapipe/hands'),
+          import('@mediapipe/drawing_utils')
+        ]);
+        const { Hands, HAND_CONNECTIONS } = handsModule as any;
+        const drawConnectorsFn = (drawingModule as any).drawConnectors;
+        const drawLandmarksFn = (drawingModule as any).drawLandmarks;
 
         handsInstance = new Hands({ locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
         handsInstance.setOptions({
@@ -141,7 +147,7 @@ const VirtualPet: React.FC = () => {
         const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
         const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
-        handsInstance.onResults((results) => {
+        handsInstance.onResults((results: any) => {
           if (!videoRef.current || !canvasRef.current) return;
           const canvas = canvasRef.current;
           const ctx = canvas.getContext('2d');
@@ -314,8 +320,8 @@ const VirtualPet: React.FC = () => {
 
             if (results.multiHandLandmarks) {
               for (const lm of results.multiHandLandmarks) {
-                (drawConnectors as any)(ctx, lm, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
-                (drawLandmarks as any)(ctx, lm, { color: '#FF0000', lineWidth: 1 });
+                (drawConnectorsFn as any)(ctx, lm, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
+                (drawLandmarksFn as any)(ctx, lm, { color: '#FF0000', lineWidth: 1 });
               }
             }
           } else {

@@ -1,4 +1,3 @@
-import React from 'react';
 import VirtualPet from './components/VirtualPet';
 
 function App() {
