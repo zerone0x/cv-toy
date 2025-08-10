@@ -27,6 +27,65 @@ interface GestureInfo {
   };
 }
 
+const MEDIAPIPE_HANDS_CDN_BASE = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands';
+const MEDIAPIPE_DU_CDN_BASE = 'https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils';
+
+let mediapipeLoadPromise: Promise<{
+  Hands: any;
+  HAND_CONNECTIONS: any;
+  drawConnectors: any;
+  drawLandmarks: any;
+}> | null = null;
+
+function loadScript(src: string): Promise<void> {
+  return new Promise(resolve => {
+    const existing = document.querySelector(`script[src="${src}"]`) as HTMLScriptElement | null;
+    if (existing) {
+      if (existing.getAttribute('data-loaded') === 'true') {
+        resolve();
+        return;
+      }
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => resolve());
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.crossOrigin = 'anonymous';
+    s.addEventListener('load', () => {
+      s.setAttribute('data-loaded', 'true');
+      resolve();
+    });
+    s.addEventListener('error', () => resolve());
+    document.head.appendChild(s);
+  });
+}
+
+async function ensureMediapipe(): Promise<{
+  Hands: any;
+  HAND_CONNECTIONS: any;
+  drawConnectors: any;
+  drawLandmarks: any;
+}> {
+  if (!mediapipeLoadPromise) {
+    mediapipeLoadPromise = (async () => {
+      (window as any).createMediapipeSolutionsWasm = { locateFile: (path: string) => `${MEDIAPIPE_HANDS_CDN_BASE}/${path}` };
+      (window as any).createMediapipeSolutionsPackedAssets = { locateFile: (path: string) => `${MEDIAPIPE_HANDS_CDN_BASE}/${path}` };
+      await Promise.all([
+        loadScript(`${MEDIAPIPE_DU_CDN_BASE}/drawing_utils.js`),
+        loadScript(`${MEDIAPIPE_HANDS_CDN_BASE}/hands.js`),
+      ]);
+      const Hands = (window as any).Hands;
+      const HAND_CONNECTIONS = (window as any).HAND_CONNECTIONS;
+      const drawConnectors = (window as any).drawConnectors;
+      const drawLandmarks = (window as any).drawLandmarks;
+      return { Hands, HAND_CONNECTIONS, drawConnectors, drawLandmarks };
+    })();
+  }
+  return mediapipeLoadPromise;
+}
+
 const VirtualPet: React.FC = () => {
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [petPosition, setPetPosition] = useState<PetPosition>({ x: 50, y: 80 });
@@ -115,19 +174,13 @@ const VirtualPet: React.FC = () => {
         });
         
         if (videoRef.current) {
-          videoRef.current.srcObject = stream as MediaStream;
+          (videoRef.current as any).srcObject = stream as MediaStream;
           await videoRef.current.play();
         }
 
-        const [handsModule, drawingModule] = await Promise.all([
-          import('@mediapipe/hands'),
-          import('@mediapipe/drawing_utils')
-        ]);
-        const { Hands, HAND_CONNECTIONS } = handsModule as any;
-        const drawConnectorsFn = (drawingModule as any).drawConnectors;
-        const drawLandmarksFn = (drawingModule as any).drawLandmarks;
+        const { Hands, HAND_CONNECTIONS, drawConnectors, drawLandmarks } = await ensureMediapipe();
 
-        handsInstance = new Hands({ locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+        handsInstance = new Hands({ locateFile: (file: string) => `${MEDIAPIPE_HANDS_CDN_BASE}/${file}` });
         handsInstance.setOptions({
           maxNumHands: 2,
           modelComplexity: 0,
@@ -320,8 +373,8 @@ const VirtualPet: React.FC = () => {
 
             if (results.multiHandLandmarks) {
               for (const lm of results.multiHandLandmarks) {
-                (drawConnectorsFn as any)(ctx, lm, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
-                (drawLandmarksFn as any)(ctx, lm, { color: '#FF0000', lineWidth: 1 });
+                (drawConnectors as any)(ctx, lm, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
+                (drawLandmarks as any)(ctx, lm, { color: '#FF0000', lineWidth: 1 });
               }
             }
           } else {
@@ -355,8 +408,8 @@ const VirtualPet: React.FC = () => {
     initializeCamera();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (videoRef.current && (videoRef.current as any).srcObject) {
+        const stream = (videoRef.current as any).srcObject as MediaStream;
         stream.getTracks().forEach(track => track.stop());
       }
       cancelAnimationFrame(animationId);
