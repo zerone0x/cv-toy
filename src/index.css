@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    @apply antialiased bg-slate-950 text-slate-100;
+    background-attachment: fixed;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      radial-gradient(1200px 600px at -10% -10%, rgba(168,85,247,0.2), transparent 60%),
+      radial-gradient(1000px 500px at 110% 110%, rgba(236,72,153,0.18), transparent 60%),
+      linear-gradient(135deg, #020617 0%, #130422 50%, #0f172a 100%);
+    background-size:
+      24px 24px,
+      24px 24px,
+      auto,
+      auto,
+      auto;
+    background-position:
+      0 0,
+      6px 6px,
+      center,
+      center,
+      center;
+  }
+}
