@@ -118,6 +118,9 @@ const VirtualPet: React.FC = () => {
   const highFiveHideTimeoutRef = useRef<number | null>(null);
   const lastPalmRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const [showDebug, setShowDebug] = useState(false);
+  const [petImage, setPetImage] = useState<string>('https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop&crop=face');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -127,6 +130,28 @@ const VirtualPet: React.FC = () => {
   const grabOffsetRef = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
   useEffect(() => { petPositionRef.current = petPosition; }, [petPosition]);
   useEffect(() => { isGrabbingRef.current = isGrabbing; }, [isGrabbing]);
+
+  const handlePetImageChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+    const url = URL.createObjectURL(file);
+    objectUrlRef.current = url;
+    setPetImage(url);
+    e.target.value = '';
+  };
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+    };
+  }, []);
 
   const showPetToast = (message: string) => {
     setPetToast({ visible: true, message });
@@ -431,12 +456,13 @@ const VirtualPet: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-purple-500/20 blur-3xl" aria-hidden="true" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-pink-500/20 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-sky-400/20 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden="true" />
       <div className="relative w-full max-w-4xl">
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePetImageChange} />
         {!isCameraOn ? (
           <div className="bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 p-12 text-center overflow-hidden relative">
-            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,rgba(168,85,247,0.18),transparent_60%),radial-gradient(ellipse_at_bottom_left,rgba(236,72,153,0.18),transparent_60%)]" />
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,rgba(59,130,246,0.16),transparent_60%),radial-gradient(ellipse_at_bottom_left,rgba(16,185,129,0.16),transparent_60%)]" />
             <div className="relative mb-8">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 mb-6 shadow-lg shadow-purple-500/25">
                 <Sparkles className="w-10 h-10 text-white" />
@@ -475,6 +501,14 @@ const VirtualPet: React.FC = () => {
               <Play className="w-6 h-6 transition-transform group-hover:scale-110" />
               Start Camera
             </button>
+            <div className="mt-4">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 hover:shadow-lg"
+              >
+                Upload Pet Image
+              </button>
+            </div>
           </div>
         ) : (
           <div className="bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 overflow-hidden">
@@ -484,7 +518,7 @@ const VirtualPet: React.FC = () => {
               </h2>
               
               <div className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden border border-slate-600/50 shadow-inner">
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(168,85,247,0.12),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(236,72,153,0.12),transparent_60%)]" style={{ zIndex: 5 }} />
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.10),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(16,185,129,0.10),transparent_60%)]" style={{ zIndex: 5 }} />
 
                 <video
                   ref={videoRef}
@@ -510,7 +544,7 @@ const VirtualPet: React.FC = () => {
                 
                 <img
                   ref={petRef}
-                  src="https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop&crop=face"
+                  src={petImage}
                   alt="Virtual Pet Cat"
                   id="virtual-pet"
                   className={`absolute w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg transition-transform duration-300 ease-out transform hover:scale-110 ${(isPetting || isFeeding || isPoking) ? 'scale-110' : ''}`}
@@ -590,6 +624,14 @@ const VirtualPet: React.FC = () => {
                     <Bug className="w-4 h-4 text-pink-300" />
                     <span className="text-xs font-medium">Debug</span>
                   </button>
+                  <div className="mt-2">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/80 border border-white/10 text-slate-200 hover:bg-slate-800/80 transition-colors"
+                    >
+                      Change Pet Image
+                    </button>
+                  </div>
                   {showDebug && (
                     <div className="mt-2 bg-slate-900/80 backdrop-blur-sm rounded-xl p-3 text-xs text-slate-300 border border-white/10 max-w-xs">
                       <div className="space-y-1">
