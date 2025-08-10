@@ -455,58 +455,84 @@ const VirtualPet: React.FC = () => {
   }, [isCameraOn]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-sky-400/20 blur-3xl" aria-hidden="true" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden="true" />
-      <div className="relative w-full max-w-4xl">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950">
+      {/* Enhanced ambient background effects */}
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-gradient-to-r from-violet-500/30 to-purple-500/30 blur-3xl animate-pulse" aria-hidden="true" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-gradient-to-r from-pink-500/25 to-rose-500/25 blur-3xl animate-pulse" aria-hidden="true" style={{ animationDelay: '1s' }} />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-gradient-to-r from-blue-500/10 to-cyan-500/10 blur-3xl animate-pulse" aria-hidden="true" style={{ animationDelay: '2s' }} />
+      
+      <div className="relative w-full max-w-5xl">
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePetImageChange} />
         {!isCameraOn ? (
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 p-12 text-center overflow-hidden relative">
-            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,rgba(59,130,246,0.16),transparent_60%),radial-gradient(ellipse_at_bottom_left,rgba(16,185,129,0.16),transparent_60%)]" />
-            <div className="relative mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 mb-6 shadow-lg shadow-purple-500/25">
-                <Sparkles className="w-10 h-10 text-white" />
+          <div className="relative bg-white/5 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/10 p-12 text-center overflow-hidden">
+            {/* Glassmorphism overlay */}
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/10 via-transparent to-purple-500/5 rounded-3xl" />
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,rgba(139,92,246,0.15),transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(236,72,153,0.15),transparent_50%)]" />
+            
+            <div className="relative mb-12">
+              {/* Enhanced icon with floating animation */}
+              <div className="relative inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-pink-500 mb-8 shadow-2xl shadow-purple-500/40 animate-float">
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/20 to-transparent" />
+                <Sparkles className="w-12 h-12 text-white drop-shadow-lg" />
+                <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-violet-500 to-pink-500 opacity-75 blur-sm -z-10 animate-pulse" />
               </div>
-              <h1 className="text-4xl font-extrabold text-white mb-3 bg-gradient-to-r from-purple-300 via-pink-300 to-purple-300 bg-clip-text text-transparent tracking-tight">
+              
+              {/* Enhanced typography */}
+              <h1 className="text-5xl md:text-6xl font-black text-white mb-4 bg-gradient-to-r from-violet-300 via-purple-300 to-pink-300 bg-clip-text text-transparent tracking-tight leading-tight">
                 Virtual Pet
               </h1>
-              <p className="text-slate-300 text-lg leading-relaxed max-w-xl mx-auto">
-                Meet your interactive virtual pet. Use hand gestures to play and interact through your camera.
+              <div className="h-1 w-24 bg-gradient-to-r from-violet-500 to-pink-500 rounded-full mx-auto mb-6" />
+              <p className="text-slate-300 text-xl leading-relaxed max-w-2xl mx-auto font-light">
+                Experience the magic of AI-powered pet interaction. Use intuitive hand gestures to play, feed, and bond with your virtual companion.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto mb-10">
-              <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200">
-                <Hand className="w-4 h-4 text-purple-300" />
-                <span className="text-sm">Gestures</span>
+            {/* Enhanced feature grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
+              <div className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-violet-400/30">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 group-hover:from-violet-500/30 group-hover:to-purple-500/30 transition-all duration-300">
+                  <Hand className="w-6 h-6 text-violet-300" />
+                </div>
+                <span className="text-sm font-medium">Hand Gestures</span>
               </div>
-              <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200">
-                <Pointer className="w-4 h-4 text-pink-300" />
-                <span className="text-sm">Poke</span>
+              <div className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-pink-400/30">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 group-hover:from-pink-500/30 group-hover:to-rose-500/30 transition-all duration-300">
+                  <Pointer className="w-6 h-6 text-pink-300" />
+                </div>
+                <span className="text-sm font-medium">Interactive Poke</span>
               </div>
-              <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200">
-                <Utensils className="w-4 h-4 text-purple-300" />
-                <span className="text-sm">Feed</span>
+              <div className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-purple-400/30">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 group-hover:from-purple-500/30 group-hover:to-violet-500/30 transition-all duration-300">
+                  <Utensils className="w-6 h-6 text-purple-300" />
+                </div>
+                <span className="text-sm font-medium">Smart Feeding</span>
               </div>
-              <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200">
-                <Heart className="w-4 h-4 text-pink-300" />
-                <span className="text-sm">Pet</span>
+              <div className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-rose-400/30">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-rose-500/20 to-pink-500/20 group-hover:from-rose-500/30 group-hover:to-pink-500/30 transition-all duration-300">
+                  <Heart className="w-6 h-6 text-rose-300" />
+                </div>
+                <span className="text-sm font-medium">Affection System</span>
               </div>
             </div>
             
-            <button
-              onClick={startCamera}
-              className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 transform hover:scale-[1.03] hover:shadow-2xl hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-pink-400/40"
-            >
-              <Play className="w-6 h-6 transition-transform group-hover:scale-110" />
-              Start Camera
-            </button>
-            <div className="mt-4">
+            {/* Enhanced action buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                onClick={startCamera}
+                className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 hover:from-violet-500 hover:via-purple-500 hover:to-pink-500 text-white font-bold py-5 px-10 rounded-2xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/30 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 focus:ring-offset-transparent"
+              >
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <Play className="w-7 h-7 transition-transform group-hover:scale-110 drop-shadow-sm" />
+                <span className="text-lg">Start Experience</span>
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-violet-600 to-pink-600 opacity-75 blur-lg -z-10 group-hover:opacity-100 transition-opacity duration-300" />
+              </button>
+              
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 hover:shadow-lg"
+                className="group inline-flex items-center gap-3 bg-white/10 hover:bg-white/15 backdrop-blur-sm text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 hover:scale-105 border border-white/20 hover:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
               >
-                Upload Pet Image
+                <Camera className="w-5 h-5 transition-transform group-hover:scale-110" />
+                <span>Customize Pet</span>
               </button>
             </div>
           </div>
