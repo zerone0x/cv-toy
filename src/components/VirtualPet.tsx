@@ -121,6 +121,7 @@ const VirtualPet: React.FC = () => {
   const [petImage, setPetImage] = useState<string>('https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop&crop=face');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const lastFingerActionRef = useRef<{ [key: string]: number }>({});
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -389,6 +390,31 @@ const VirtualPet: React.FC = () => {
             }
             lastPalmRef.current = { x: palmX, y: palmY, time: currentTime };
 
+            if (!isGrabbingRef.current && !isPinchingNow && nearPet) {
+              const singleExtended = extendedFingers.length === 1 ? extendedFingers[0] : null;
+              if (singleExtended && singleExtended !== 'index') {
+                const lastTime = lastFingerActionRef.current[singleExtended] || 0;
+                if (currentTime - lastTime > 1000) {
+                  lastFingerActionRef.current[singleExtended] = currentTime;
+                  let message = '';
+                  if (singleExtended === 'thumb') message = 'Thumbs up!';
+                  else if (singleExtended === 'middle') message = 'Wave!';
+                  else if (singleExtended === 'ring') message = 'Shiny!';
+                  else if (singleExtended === 'pinky') message = 'Pinky promise!';
+                  if (message) {
+                    setIsPoking(true);
+                    showPetToast(message);
+                    if (pokingHideTimeoutRef.current) {
+                      window.clearTimeout(pokingHideTimeoutRef.current);
+                    }
+                    pokingHideTimeoutRef.current = window.setTimeout(() => {
+                      setIsPoking(false);
+                    }, 350);
+                  }
+                }
+              }
+            }
+
             if (!isGrabbingRef.current && gestureInfo.isPointing && !isPinchingNow && nearPet) {
               if (Date.now() - lastPokeTimeRef.current > 1000) {
                 lastPokeTimeRef.current = Date.now();
@@ -489,29 +515,60 @@ const VirtualPet: React.FC = () => {
 
             {/* Enhanced feature grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
-              <div className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-violet-400/30">
+              <div className="group relative flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-violet-400/30">
                 <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 group-hover:from-violet-500/30 group-hover:to-purple-500/30 transition-all duration-300">
                   <Hand className="w-6 h-6 text-violet-300" />
                 </div>
                 <span className="text-sm font-medium">Hand Gestures</span>
+                <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-3 rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-2xl">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1">Details</div>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>Pinch near the pet to grab and drag to move</li>
+                    <li>Pinch near the bowl to feed</li>
+                    <li>Open hand near the pet to pet</li>
+                    <li>Open hand quickly approaching triggers “High five!”</li>
+                    <li>Point with index finger near the pet to “Boop!”</li>
+                  </ul>
+                </div>
               </div>
-              <div className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-pink-400/30">
+              <div className="group relative flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-pink-400/30">
                 <div className="p-3 rounded-xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 group-hover:from-pink-500/30 group-hover:to-rose-500/30 transition-all duration-300">
                   <Pointer className="w-6 h-6 text-pink-300" />
                 </div>
                 <span className="text-sm font-medium">Interactive Poke</span>
+                <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-3 rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-2xl">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1">Details</div>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>Point with your index finger near the pet to trigger “Boop!”</li>
+                    <li>Click or tap the pet avatar to poke</li>
+                  </ul>
+                </div>
               </div>
-              <div className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-purple-400/30">
+              <div className="group relative flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-purple-400/30">
                 <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 group-hover:from-purple-500/30 group-hover:to-violet-500/30 transition-all duration-300">
                   <Utensils className="w-6 h-6 text-purple-300" />
                 </div>
                 <span className="text-sm font-medium">Smart Feeding</span>
+                <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-3 rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-2xl">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1">Details</div>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>Pinch near the bowl to feed your pet</li>
+                    <li>Short cooldown prevents repeated triggers</li>
+                  </ul>
+                </div>
               </div>
-              <div className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-rose-400/30">
+              <div className="group relative flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:border-rose-400/30">
                 <div className="p-3 rounded-xl bg-gradient-to-br from-rose-500/20 to-pink-500/20 group-hover:from-rose-500/30 group-hover:to-pink-500/30 transition-all duration-300">
                   <Heart className="w-6 h-6 text-rose-300" />
                 </div>
                 <span className="text-sm font-medium">Affection System</span>
+                <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-3 rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-2xl">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1">Details</div>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>Open hand near the pet to pet and comfort</li>
+                    <li>Open hand with fast approach triggers “High five!”</li>
+                  </ul>
+                </div>
               </div>
             </div>
             
@@ -525,30 +582,51 @@ const VirtualPet: React.FC = () => {
                 <Play className="w-7 h-7 transition-transform group-hover:scale-110 drop-shadow-sm" />
                 <span className="text-lg">Start Experience</span>
                 <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-violet-600 to-pink-600 opacity-75 blur-lg -z-10 group-hover:opacity-100 transition-opacity duration-300" />
+                <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-3 rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-2xl">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1">Camera Control</div>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>One-click to request camera access</li>
+                    <li>Use “End Session” to stop the camera</li>
+                  </ul>
+                </div>
               </button>
               
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="group inline-flex items-center gap-3 bg-white/10 hover:bg-white/15 backdrop-blur-sm text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 hover:scale-105 border border-white/20 hover:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
+                className="group relative inline-flex items-center gap-3 bg-white/10 hover:bg-white/15 backdrop-blur-sm text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 hover:scale-105 border border-white/20 hover:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
               >
                 <Camera className="w-5 h-5 transition-transform group-hover:scale-110" />
                 <span>Customize Pet</span>
+                <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-3 rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-2xl">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1">Upload Image</div>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>Upload an image to customize the pet avatar</li>
+                    <li>Most common image formats are supported</li>
+                  </ul>
+                </div>
               </button>
             </div>
           </div>
         ) : (
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 overflow-hidden">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-white mb-6 text-center">
-                Playing with your Virtual Pet
-              </h2>
+          <div className="relative bg-white/5 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/10 overflow-hidden">
+            {/* Glassmorphism overlay for camera interface */}
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/10 via-transparent to-purple-500/5 rounded-3xl" />
+            
+            <div className="relative p-8">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-violet-300 to-pink-300 bg-clip-text text-transparent">
+                  Interactive Pet Experience
+                </h2>
+                <div className="h-0.5 w-16 bg-gradient-to-r from-violet-500 to-pink-500 rounded-full mx-auto" />
+              </div>
               
-              <div className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden border border-slate-600/50 shadow-inner">
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.10),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(16,185,129,0.10),transparent_60%)]" style={{ zIndex: 5 }} />
+              <div className="relative aspect-video bg-gradient-to-br from-slate-900/80 to-slate-800/80 rounded-3xl overflow-hidden border border-white/20 shadow-2xl backdrop-blur-sm">
+                {/* Enhanced ambient lighting */}
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.15),transparent_50%),radial-gradient(ellipse_at_bottom,rgba(236,72,153,0.15),transparent_50%),radial-gradient(ellipse_at_center,rgba(59,130,246,0.08),transparent_70%)]" style={{ zIndex: 5 }} />
 
                 <video
                   ref={videoRef}
-                  className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+                  className="absolute inset-0 w-full h-full object-cover scale-x-[-1] rounded-3xl"
                   muted
                   autoPlay
                   playsInline
@@ -557,138 +635,182 @@ const VirtualPet: React.FC = () => {
                 
                 <canvas
                   ref={canvasRef}
-                  className="absolute inset-0 w-full h-full scale-x-[-1]"
+                  className="absolute inset-0 w-full h-full scale-x-[-1] rounded-3xl"
                   style={{ zIndex: 20 }}
                 />
 
+                {/* Enhanced interaction glow effects */}
                 {(isPetting || isFeeding || isPoking || isHighFiving) && (
-                  <div
-                    className="absolute w-28 h-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.25),rgba(168,85,247,0.2)_40%,transparent_65%)] blur-md"
-                    style={{ zIndex: 28, left: `${petPosition.x}%`, top: `${petPosition.y}%` }}
-                  />
+                  <>
+                    <div
+                      className="absolute w-32 h-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.3),rgba(168,85,247,0.25)_30%,rgba(236,72,153,0.15)_60%,transparent_80%)] blur-xl animate-pulse"
+                      style={{ zIndex: 25, left: `${petPosition.x}%`, top: `${petPosition.y}%` }}
+                    />
+                    <div
+                      className="absolute w-20 h-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.4),rgba(168,85,247,0.3)_40%,transparent_70%)] blur-md"
+                      style={{ zIndex: 27, left: `${petPosition.x}%`, top: `${petPosition.y}%` }}
+                    />
+                  </>
                 )}
                 
+                {/* Enhanced pet with better styling */}
                 <img
                   ref={petRef}
                   src={petImage}
-                  alt="Virtual Pet Cat"
+                  alt="Virtual Pet"
                   id="virtual-pet"
-                  className={`absolute w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg transition-transform duration-300 ease-out transform hover:scale-110 ${(isPetting || isFeeding || isPoking) ? 'scale-110' : ''}`}
+                  className={`absolute w-24 h-24 rounded-full object-cover border-4 border-white/80 shadow-2xl transition-all duration-300 ease-out transform hover:scale-110 cursor-pointer ${
+                    (isPetting || isFeeding || isPoking) ? 'scale-110 border-violet-300/80 shadow-violet-500/50' : ''
+                  } ${isGrabbing ? 'scale-105 rotate-2' : ''}`}
                   onClick={handlePetPoke}
                   onTouchStart={handlePetPoke}
                   style={{
                     zIndex: 30,
-                    left: `calc(${petPosition.x}% - 2.5rem)`,
-                    top: `calc(${petPosition.y}% - 2.5rem)`,
-                    willChange: 'left, top, transform'
+                    left: `calc(${petPosition.x}% - 3rem)`,
+                    top: `calc(${petPosition.y}% - 3rem)`,
+                    willChange: 'left, top, transform',
+                    filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))'
                   }}
                 />
 
+                {/* Enhanced high-five effect */}
                 {isHighFiving && (
                   <div
                     className="absolute"
-                    style={{ zIndex: 55, left: `calc(${petPosition.x}% - 2.5rem)`, top: `calc(${petPosition.y}% - 2.5rem)` }}
+                    style={{ zIndex: 55, left: `calc(${petPosition.x}% - 3rem)`, top: `calc(${petPosition.y}% - 3rem)` }}
                   >
-                    <div className="relative w-20 h-20">
-                      <span className="absolute inset-0 rounded-full border-4 border-yellow-400/80 animate-ping"></span>
-                      <span className="absolute inset-2 rounded-full border-4 border-pink-400/80 animate-ping"></span>
-                      <span className="absolute inset-4 rounded-full border-4 border-purple-400/80 animate-ping"></span>
+                    <div className="relative w-24 h-24">
+                      <span className="absolute inset-0 rounded-full border-4 border-yellow-400/90 animate-ping"></span>
+                      <span className="absolute inset-2 rounded-full border-4 border-pink-400/90 animate-ping" style={{ animationDelay: '0.1s' }}></span>
+                      <span className="absolute inset-4 rounded-full border-4 border-purple-400/90 animate-ping" style={{ animationDelay: '0.2s' }}></span>
+                      <span className="absolute inset-6 rounded-full border-4 border-violet-400/90 animate-ping" style={{ animationDelay: '0.3s' }}></span>
                     </div>
                   </div>
                 )}
 
+                {/* Enhanced food bowl */}
                 <div
-                  className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-slate-800/70 border border-white/10 text-white text-xl"
+                  className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-slate-800/90 to-slate-700/90 border-2 border-white/20 text-white text-2xl shadow-2xl backdrop-blur-sm"
                   style={{ zIndex: 35 }}
                 >
                   🥣
                   {isFeeding && (
                     <>
-                      <span className="absolute inset-0 rounded-full border-2 border-pink-400/40 animate-ping" />
-                      <span className="absolute inset-2 rounded-full border-2 border-purple-400/30 animate-ping" />
+                      <span className="absolute inset-0 rounded-full border-3 border-pink-400/60 animate-ping" />
+                      <span className="absolute inset-2 rounded-full border-3 border-purple-400/50 animate-ping" style={{ animationDelay: '0.2s' }} />
+                      <span className="absolute inset-4 rounded-full border-3 border-violet-400/40 animate-ping" style={{ animationDelay: '0.4s' }} />
                     </>
                   )}
                 </div>
 
+                {/* Enhanced toast messages */}
                 {petToast.visible && (
                   <div
-                    className={`absolute px-3 py-2 rounded-xl text-white text-sm bg-black/70 backdrop-blur-sm border border-white/10 transition-all duration-300 ${petToast.visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
+                    className={`absolute px-4 py-3 rounded-2xl text-white text-sm font-medium bg-black/80 backdrop-blur-md border border-white/20 shadow-2xl transition-all duration-300 ${
+                      petToast.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95'
+                    }`}
                     style={{
                       zIndex: 60,
                       left: `calc(${petPosition.x}%)`,
-                      top: `calc(${petPosition.y}% - 5rem)`,
+                      top: `calc(${petPosition.y}% - 6rem)`,
                       transform: 'translateX(-50%)'
                     }}
                   >
-                    {petToast.message}
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-violet-500/20 to-pink-500/20" />
+                    <span className="relative">{petToast.message}</span>
                   </div>
                 )}
                 
-                <div 
-                  className={`absolute top-4 right-4 transition-all duration-500 transform ${
-                    handDetection.isHandVisible 
-                      ? 'translate-y-0 opacity-100 scale-100' 
-                      : '-translate-y-2 opacity-0 scale-95'
+                {/* Enhanced hand detection indicator */}
+                <div
+                  className={`absolute top-6 right-6 transition-all duration-500 transform ${
+                    handDetection.isHandVisible
+                      ? 'translate-y-0 opacity-100 scale-100'
+                      : '-translate-y-4 opacity-0 scale-90'
                   }`}
                   style={{ zIndex: 50 }}
                 >
-                  <div className="bg-green-500/90 backdrop-blur-sm text-white px-4 py-2 rounded-xl shadow-lg border border-green-400/30">
-                    <div className="flex items-center gap-2">
-                      <Hand className="w-4 h-4 animate-pulse" />
-                      <span className="text-sm font-medium">
-                        Hand Detected! ({handDetection.handCount})
+                  <div className="bg-gradient-to-r from-emerald-500/90 to-green-500/90 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl border border-emerald-400/30">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <Hand className="w-5 h-5 animate-pulse" />
+                        <div className="absolute inset-0 w-5 h-5 bg-emerald-300 rounded-full blur-sm animate-ping opacity-75" />
+                      </div>
+                      <span className="text-sm font-semibold">
+                        Hand Active ({handDetection.handCount})
                       </span>
                     </div>
                   </div>
                 </div>
                 
-                <div className="absolute top-4 left-4" style={{ zIndex: 48 }}>
+                {/* Enhanced control panel */}
+                <div className="absolute top-6 left-6 space-y-3" style={{ zIndex: 48 }}>
                   <button
                     onClick={() => setShowDebug(v => !v)}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/80 border border-white/10 text-slate-200 hover:bg-slate-800/80 transition-colors"
+                    className="group relative inline-flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/15 transition-all duration-300 hover:scale-105 shadow-lg"
                   >
-                    <Bug className="w-4 h-4 text-pink-300" />
-                    <span className="text-xs font-medium">Debug</span>
+                    <Bug className="w-4 h-4 text-pink-300 transition-transform group-hover:scale-110" />
+                    <span className="text-sm font-medium">Debug</span>
+                    <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-3 rounded-xl border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-2xl">
+                      <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1">Debug Panel</div>
+                      <ul className="list-disc pl-4 space-y-1">
+                        <li>Inspect hand detection status</li>
+                        <li>See gesture state and pet position</li>
+                        <li>Helpful for troubleshooting</li>
+                      </ul>
+                    </div>
                   </button>
-                  <div className="mt-2">
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/80 border border-white/10 text-slate-200 hover:bg-slate-800/80 transition-colors"
-                    >
-                      Change Pet Image
-                    </button>
-                  </div>
+                  
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="group relative inline-flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/15 transition-all duration-300 hover:scale-105 shadow-lg"
+                  >
+                    <Camera className="w-4 h-4 text-violet-300 transition-transform group-hover:scale-110" />
+                    <span className="text-sm font-medium">Change Pet</span>
+                    <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-3 rounded-xl border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-2xl">
+                      <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1">Upload Image</div>
+                      <ul className="list-disc pl-4 space-y-1">
+                        <li>Upload an image to customize the pet avatar</li>
+                        <li>Replaces the default pet image</li>
+                      </ul>
+                    </div>
+                  </button>
+                  
+                  {/* Enhanced debug panel */}
                   {showDebug && (
-                    <div className="mt-2 bg-slate-900/80 backdrop-blur-sm rounded-xl p-3 text-xs text-slate-300 border border-white/10 max-w-xs">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className={`${handDetection.isHandVisible ? 'bg-green-400' : 'bg-red-400'} w-2 h-2 rounded-full`}></div>
-                          <span>Hand Status: {handDetection.isHandVisible ? 'Detected' : 'Not Detected'}</span>
+                    <div className="bg-black/80 backdrop-blur-md rounded-2xl p-4 text-xs text-slate-300 border border-white/20 max-w-sm shadow-2xl">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 pb-2 border-b border-white/10">
+                          <div className={`${handDetection.isHandVisible ? 'bg-emerald-400' : 'bg-red-400'} w-3 h-3 rounded-full animate-pulse`}></div>
+                          <span className="font-medium">Status: {handDetection.isHandVisible ? 'Connected' : 'Searching...'}</span>
                         </div>
-                        <div>Hands Count: {handDetection.handCount}</div>
-                        <div>Pet Position: ({petPosition.x.toFixed(1)}%, {petPosition.y.toFixed(1)}%)</div>
-                        <div>Pinch: {gestureInfo.isPinching ? 'Yes' : 'No'}</div>
-                        <div>Grabbing: {isGrabbing ? 'Yes' : 'No'}</div>
-                        <div>Petting: {isPetting ? 'Yes' : 'No'}</div>
-                        <div>Feeding: {isFeeding ? 'Yes' : 'No'}</div>
-                        <div>Open Hand: {gestureInfo.isOpenHand ? 'Yes' : 'No'}</div>
-                        <div>Fist: {gestureInfo.isFist ? 'Yes' : 'No'}</div>
-                        <div>Pointing: {gestureInfo.isPointing ? 'Yes' : 'No'}</div>
-                        <div>Extended: {gestureInfo.extendedFingers.join(', ') || 'None'}</div>
-                        <div>Curl thumb/index/middle/ring/pinky: {gestureInfo.curlByFinger.thumb.toFixed(2)} / {gestureInfo.curlByFinger.index.toFixed(2)} / {gestureInfo.curlByFinger.middle.toFixed(2)} / {gestureInfo.curlByFinger.ring.toFixed(2)} / {gestureInfo.curlByFinger.pinky.toFixed(2)}</div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>Hands: {handDetection.handCount}</div>
+                          <div>Position: ({petPosition.x.toFixed(1)}%, {petPosition.y.toFixed(1)}%)</div>
+                          <div>Pinch: {gestureInfo.isPinching ? '✓' : '✗'}</div>
+                          <div>Grab: {isGrabbing ? '✓' : '✗'}</div>
+                          <div>Pet: {isPetting ? '✓' : '✗'}</div>
+                          <div>Feed: {isFeeding ? '✓' : '✗'}</div>
+                          <div>Open: {gestureInfo.isOpenHand ? '✓' : '✗'}</div>
+                          <div>Point: {gestureInfo.isPointing ? '✓' : '✗'}</div>
+                        </div>
+                        <div className="pt-2 border-t border-white/10">
+                          <div className="text-xs text-slate-400">Extended: {gestureInfo.extendedFingers.join(', ') || 'None'}</div>
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
               
-              <div className="mt-6 flex justify-center">
+              {/* Enhanced stop button */}
+              <div className="mt-8 flex justify-center">
                 <button
                   onClick={() => setIsCameraOn(false)}
-                  className="inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 hover:shadow-lg"
+                  className="group inline-flex items-center gap-3 bg-gradient-to-r from-slate-700/80 to-slate-600/80 hover:from-slate-600/80 hover:to-slate-500/80 backdrop-blur-sm text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 hover:scale-105 border border-white/20 hover:border-white/30 shadow-xl focus:outline-none focus:ring-2 focus:ring-white/30"
                 >
-                  <Camera className="w-4 h-4" />
-                  Stop Camera
+                  <Camera className="w-5 h-5 transition-transform group-hover:scale-110" />
+                  <span>End Session</span>
                 </button>
               </div>
             </div>
@@ -697,21 +819,54 @@ const VirtualPet: React.FC = () => {
       </div>
       <div className="absolute bottom-4 left-4 right-4 bg-slate-900/80 backdrop-blur-sm rounded-xl p-4 border border-white/10" style={{ zIndex: 40 }}>
         <div className="flex flex-wrap items-center justify-center gap-3 text-slate-300 text-xs">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-white/10">
+          <span className="group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-white/10">
             <Pointer className="w-3.5 h-3.5 text-pink-300" />
             Poke the pet
+            <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-2.5 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-xl">
+              Point with index finger near the pet to trigger “Boop!”.
+            </div>
           </span>
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-white/10">
+          <span className="group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-white/10">
             <Hand className="w-3.5 h-3.5 text-purple-300" />
             High five with open hand
+            <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-2.5 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-xl">
+              Open hand quickly approaching the pet triggers “High five!”.
+            </div>
           </span>
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-white/10">
+          <span className="group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-white/10">
             <Camera className="w-3.5 h-3.5 text-purple-300" />
             Pinch near pet to grab
+            <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-2.5 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-xl">
+              Pinch near the pet to grab and drag to move.
+            </div>
           </span>
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-white/10">
+          <span className="group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-white/10">
             <Utensils className="w-3.5 h-3.5 text-pink-300" />
             Pinch near bowl to feed
+            <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-2.5 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-xl">
+              Pinch near the bowl to trigger the feeding effect.
+            </div>
+          </span>
+          <span className="group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-white/10">
+            <Play className="w-3.5 h-3.5 text-violet-300" />
+            Start/Stop camera
+            <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-2.5 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-xl">
+              Use “Start Experience” to grant camera access and “End Session” to stop it.
+            </div>
+          </span>
+          <span className="group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-white/10">
+            <Sparkles className="w-3.5 h-3.5 text-violet-300" />
+            Upload image
+            <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-2.5 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-xl">
+              Customize the pet avatar by uploading an image.
+            </div>
+          </span>
+          <span className="group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-white/10">
+            <Bug className="w-3.5 h-3.5 text-pink-300" />
+            Debug panel
+            <div role="tooltip" className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full w-64 text-left bg-black/80 text-slate-100 text-xs p-2.5 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-xl">
+              View hand detection, gesture state, and position.
+            </div>
           </span>
         </div>
       </div>
